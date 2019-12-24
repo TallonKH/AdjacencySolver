@@ -74,7 +74,9 @@ def cleanSolved(sol: Solution):
 
 # if a solution doesn't work, backtrack
 # very slow, but reliable
-def solveRecurs(sol: Solution, depth:int=0):
+
+
+def solveRecurs(sol: Solution, depth: int = 0):
     if(len(sol.unsolved) == 0):
         return sol
 
@@ -82,7 +84,7 @@ def solveRecurs(sol: Solution, depth:int=0):
     pi = next(iter(sol.unsolved))
     for ti in weightedShuffle(sol.poptions[pi]):
         newSol = cloneSolution(sol)
-        
+
         result = intersectOptions(newSol, pi, {ti})
         if(result == False):
             continue
@@ -93,11 +95,10 @@ def solveRecurs(sol: Solution, depth:int=0):
 
     return None
 
-def solveIter(sol: Solution):
-    pass
-
 # solves without keeping track of previous states - just hope that it gets it right the first time around
 # very fast, but theoretically unreliable
+
+
 def solvePray(sol: Solution):
     while(len(sol.unsolved) != 0):
         pi = next(iter(sol.unsolved))
@@ -108,18 +109,20 @@ def solvePray(sol: Solution):
             return None
     return sol
 
+
 def weightedShuffle(ls):
     cop = list(ls)
     random.shuffle(cop)
     return cop
 
+
 def intersectOptions(sol: Solution, index: int, newOptions: Set[int]):
     return subtractOptions(sol, index, sol.poptions[index] - newOptions)
 
+
 def subtractOptions(sol: Solution, index: int, removedOptions: Set[int]):
     slot = sol.board.slots[index]
-    
-    
+
     # in case options removed were not present in the first place, and no change happens
     diff = sol.poptions[index] - removedOptions
     if(len(diff) == len(sol.poptions[index])):
@@ -153,7 +156,6 @@ def subtractOptions(sol: Solution, index: int, removedOptions: Set[int]):
 def makeGrid(width, height, looping=False):
     i = 0
     grid = []
-    ls = []
     for x in range(width):
         col = []
         grid.append(col)
@@ -166,7 +168,6 @@ def makeGrid(width, height, looping=False):
             i += 1
 
             col.append(slot)
-            ls.append(slot)
 
     for x in range(width):
         for y in range(height):
@@ -180,28 +181,29 @@ def makeGrid(width, height, looping=False):
                 grid[x][y].neighbors["left"] = grid[(x-1) % width][y].index
 
     return Board(
-        slots=ls
+        slots=[grid[x][y] for y in range(height)for x in range(width)]
     )
+
 
 def example():
     typeA = Tile(
         index=0,
         fitsInto=lambda a: True,
         allowedNeighbors={
-            "up": {0,1,2,4,6},
-            "down": {0,1,2,4,6},
-            "left": {0,1,3,5,6},
-            "right": {0,1,3,5,6}
+            "up": {0, 1, 2, 4, 6},
+            "down": {0, 1, 2, 4, 6},
+            "left": {0, 1, 3, 5, 6},
+            "right": {0, 1, 3, 5, 6}
         }
     )
     typeB = Tile(
         index=1,
         fitsInto=lambda a: True,
         allowedNeighbors={
-            "up": {0,3},
-            "down": {0,3},
-            "left": {0,2},
-            "right": {0,2}
+            "up": {0, 3},
+            "down": {0, 3},
+            "left": {0, 2},
+            "right": {0, 2}
         }
     )
     typeC = Tile(
@@ -210,16 +212,16 @@ def example():
         allowedNeighbors={
             "up": {0},
             "down": {0},
-            "left": {1,2},
-            "right": {1,2}
+            "left": {1, 2},
+            "right": {1, 2}
         }
     )
     typeD = Tile(
         index=3,
         fitsInto=lambda a: True,
         allowedNeighbors={
-            "up": {1,3},
-            "down": {1,3},
+            "up": {1, 3},
+            "down": {1, 3},
             "left": {0},
             "right": {0}
         }
@@ -230,16 +232,16 @@ def example():
         allowedNeighbors={
             "up": {0},
             "down": {0},
-            "left": {6,4},
-            "right": {6,4}
+            "left": {6, 4},
+            "right": {6, 4}
         }
     )
     typeF = Tile(
         index=5,
         fitsInto=lambda a: True,
         allowedNeighbors={
-            "up": {6,5},
-            "down": {6,5},
+            "up": {6, 5},
+            "down": {6, 5},
             "left": {0},
             "right": {0}
         }
@@ -255,15 +257,17 @@ def example():
         }
     )
 
-    symbols = " o|-|-#"
-    w = 25
+    symbols = " o-|-|#"
+    w = 50
     h = 25
     grid = makeGrid(w, h, True)
-    hyp = newSolution(grid, Palette([typeA, typeB, typeC, typeD, typeE, typeF, typeG]))
+    hyp = newSolution(grid, Palette(
+        [typeA, typeB, typeC, typeD, typeE, typeF, typeG]))
     # cleaned = cleanSolved(solveRecurs(hyp))
     cleaned = cleanSolved(solvePray(hyp))
-    
-    for i in range(w):
-        print(" ".join(symbols[i] for i in cleaned[i*h:(i+1)*h]))
+
+    for i in range(h):
+        print(" ".join(symbols[i] for i in cleaned[i*w:(i+1)*w]))
+
 
 example()
