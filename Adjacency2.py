@@ -1,18 +1,18 @@
 # from sortedcontainers import SortedSet
 # from pymonad import *
 from dataclasses import dataclass
-from typing import Dict, Tuple, List, Set, NewType, Callable
+from typing import Dict, Tuple, List, Set, NewType, Callable, Any
 import random
 import copy
 
 Direction = NewType("Direction", str)
-Shape = NewType("Shape", str)
+# Shape = NewType("Shape", str)
 
 # a type of tile that can occupy a slot
 @dataclass
 class Tile:
     index: int
-    fitsInto: Callable[[Shape], bool]
+    fitsInto: Callable[[Any], bool]
     allowedNeighbors: Dict[Direction, Set[int]]
 
 
@@ -24,7 +24,7 @@ class Palette:
 @dataclass
 class Slot:
     index: int
-    shape: Shape
+    shape: Any
     neighbors: Dict[Direction, int]
 
 
