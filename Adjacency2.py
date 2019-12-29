@@ -43,9 +43,8 @@ class Solution:
     unsolved: Set[int]
 
 
-def newSolution(board: Board, palette: Palette):
-    poptions = [set(ti for ti in range(len(palette.tiles)) if palette.tiles[ti].fitsInto(
-        slot.shape)) for slot in board.slots]
+def newSolution(board: Board, palette: Palette): 
+    poptions = [set(ti for ti in range(len(palette.tiles)) if palette.tiles[ti].fitsInto(slot.shape)) for slot in board.slots]
     if any(len(slotT) == 0 for slotT in poptions):
         print("Failed to construct new board!")
         return
