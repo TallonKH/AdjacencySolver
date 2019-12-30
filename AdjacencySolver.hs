@@ -4,6 +4,7 @@ import Data.Set as Set
 import Data.Map.Strict as Map
 import RandState
 import Control.Applicative
+import Data.List as List
 
 type Direction = Int
 type Shape = Int
@@ -108,6 +109,9 @@ weightedShuffle ws = weightedRandom ws >>= (\i -> (i:) <$> (weightedShuffle (rem
 weightedRandom :: (Fractional n, Ord n, Random n) => [n] -> RandState Int
 weightedRandom wts = seekDecr wts <$> (RandState $ \gen -> randomR (0, sum wts + 0.0) gen)
 
+pickRand :: [a] -> RandState a
+pickRand ls = (ls!!) <$> (RandState $ \gen -> randomR (0, (length ls)-1) gen)
+
 seekDecr :: (Fractional n, Ord n) => [n] -> n -> Int
 seekDecr [w] _ = 0
 seekDecr (w:ws) counter = 
@@ -157,23 +161,30 @@ subOptDirHelper (dir:dirs) args@(ninds, opts, ropts) sol =
 intersectOptions :: SlotIndex -> Set TileIndex -> Solution -> Maybe Solution
 intersectOptions index ntis sol = subtractOptions index (Set.difference ((poptions sol) !! index) ntis) sol
 
+a # (i, t) = a >>= intersectOptions i (Set.singleton t)
+
 isSolved :: Solution -> Bool
 isSolved sol = Set.null . unsolved $ sol
 
 solveR :: Solution -> RandState (Maybe Solution)
 solveR sol = if (isSolved sol)
     then pure $ Just sol
-    else let psi = (Set.toList (unsolved sol)) !! 0
-             pops = Set.toList ((poptions sol) !! psi)
-             weights = (\ti -> weight ((tiles . palette $ sol) !! ti)) <$> pops
-             shuffledOpts = weightedShuffle weights
-         in solveTileHelper sol psi =<< shuffledOpts 
+    else do
+        psi <- pickRand $ Set.toList (unsolved sol)      -- random unsolved pslot's index
+        let pops = Set.toList ((poptions sol) !! psi)  -- available tiles for selected pslot
+            weights = (\ti -> weight ((tiles . palette $ sol) !! ti)) <$> pops -- weights of tiles
+        solveTileHelper sol psi =<< (weightedShuffle weights) 
+
+-- return solveTileHelper sol, slotIndex, [availableTile's indices]
+--  try tiles until success (should theoretically happen first try)
+--      
+
 
 solveTileHelper :: Solution -> SlotIndex -> [TileIndex] -> RandState (Maybe Solution)
 solveTileHelper _ _ [] = pure Nothing
 solveTileHelper sol psi (t:ts) = 
-    let sol' = intersectOptions psi (Set.fromList [t]) sol
-    in case sol' of
+    let msol' = intersectOptions psi (Set.fromList [t]) sol
+    in case msol' of
         Nothing   -> solveTileHelper sol psi ts
         Just sol' -> solveR sol'
 
@@ -185,23 +196,39 @@ run brd pal = do
         evalRand (solveR sol) gen
     pure res
 
+grop :: Int -> [a] -> [[a]]
+grop _ [] = []
+grop n l
+  | n > 0 = (List.take n l) : (grop n (List.drop n l))
+  | otherwise = error "Negative or zero n"
+
+dispChars = ".+#"
+
+showGrid :: Int -> Solution -> String
+showGrid n g = intercalate "----------------------------------" $ 
+    (intercalate " ") <$> (grop n $ (\a -> 
+        case (Set.toList a) of
+            [v] -> [dispChars !! v]
+            vs  -> show vs
+    ) <$> (poptions g))
+
 testTile0 = Tile {
     weight = 1,
     fitsInto = const True,
     allowedNeighbors = Map.fromList [
-        (-1, Set.fromList [0]),
-        (1, Set.fromList [0]),
-        (-2, Set.fromList [0,1,2]),
-        (2, Set.fromList [0,1,2])]
+        (-1, Set.fromList [0,1]),
+        (1, Set.fromList [0,1]),
+        (-2, Set.fromList [0,1]),
+        (2, Set.fromList [0,1])]
 }
 testTile1 = Tile {
     weight = 1,
     fitsInto = const True,
     allowedNeighbors = Map.fromList [
-        (-1, Set.fromList [1,2]),
-        (1, Set.fromList [1,2]),
-        (-2, Set.fromList [0,1,2]),
-        (2, Set.fromList [0,1,2])]
+        (-1, Set.fromList [0,2]),
+        (1, Set.fromList [0,2]),
+        (-2, Set.fromList [0,2]),
+        (2, Set.fromList [0,2])]
 }
 testTile2 = Tile {
     weight = 1,
@@ -209,8 +236,8 @@ testTile2 = Tile {
     allowedNeighbors = Map.fromList [
         (-1, Set.fromList [1]),
         (1, Set.fromList [1]),
-        (-2, Set.fromList [0,1,2]),
-        (2, Set.fromList [0,1,2])]
+        (-2, Set.fromList [1]),
+        (2, Set.fromList [1])]
 }
 
 testTileA = Tile {
@@ -234,5 +261,5 @@ testTileB = Tile {
 
 testPal = Palette [testTile0, testTile1, testTile2]
 testPal2 = Palette [testTileA, testTileB]
-testGrid = generateGrid2 False 3 3
+testGrid = generateGrid2 True 15 15
 testSol = newSolution testGrid testPal
