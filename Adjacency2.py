@@ -185,83 +185,106 @@ def makeGrid(width, height, looping=False):
 
 
 def example():
-    typeA = Tile(
+    # typeA = Tile(
+    #     index=0,
+    #     fitsInto=lambda a: True,
+    #     allowedNeighbors={
+    #         "up": {0, 1, 2, 4, 6},
+    #         "down": {0, 1, 2, 4, 6},
+    #         "left": {0, 1, 3, 5, 6},
+    #         "right": {0, 1, 3, 5, 6}
+    #     }
+    # )
+    # typeB = Tile(
+    #     index=1,
+    #     fitsInto=lambda a: True,
+    #     allowedNeighbors={
+    #         "up": {0, 3},
+    #         "down": {0, 3},
+    #         "left": {0, 2},
+    #         "right": {0, 2}
+    #     }
+    # )
+    # typeC = Tile(
+    #     index=2,
+    #     fitsInto=lambda a: True,
+    #     allowedNeighbors={
+    #         "up": {0},
+    #         "down": {0},
+    #         "left": {1, 2},
+    #         "right": {1, 2}
+    #     }
+    # )
+    # typeD = Tile(
+    #     index=3,
+    #     fitsInto=lambda a: True,
+    #     allowedNeighbors={
+    #         "up": {1, 3},
+    #         "down": {1, 3},
+    #         "left": {0},
+    #         "right": {0}
+    #     }
+    # )
+    # typeE = Tile(
+    #     index=4,
+    #     fitsInto=lambda a: True,
+    #     allowedNeighbors={
+    #         "up": {0},
+    #         "down": {0},
+    #         "left": {6, 4},
+    #         "right": {6, 4}
+    #     }
+    # )
+    # typeF = Tile(
+    #     index=5,
+    #     fitsInto=lambda a: True,
+    #     allowedNeighbors={
+    #         "up": {6, 5},
+    #         "down": {6, 5},
+    #         "left": {0},
+    #         "right": {0}
+    #     }
+    # )
+    # typeG = Tile(
+    #     index=6,
+    #     fitsInto=lambda a: True,
+    #     allowedNeighbors={
+    #         "up": {0, 5},
+    #         "down": {0, 5},
+    #         "left": {0, 4},
+    #         "right": {0, 4}
+    #     }
+    # )
+
+    typeX = Tile(
         index=0,
         fitsInto=lambda a: True,
         allowedNeighbors={
-            "up": {0, 1, 2, 4, 6},
-            "down": {0, 1, 2, 4, 6},
-            "left": {0, 1, 3, 5, 6},
-            "right": {0, 1, 3, 5, 6}
+            "up": {1},
+            "down": {1},
+            "left": {1},
+            "right": {1}
         }
     )
-    typeB = Tile(
+    typeY = Tile(
         index=1,
         fitsInto=lambda a: True,
         allowedNeighbors={
-            "up": {0, 3},
-            "down": {0, 3},
-            "left": {0, 2},
-            "right": {0, 2}
-        }
-    )
-    typeC = Tile(
-        index=2,
-        fitsInto=lambda a: True,
-        allowedNeighbors={
             "up": {0},
             "down": {0},
-            "left": {1, 2},
-            "right": {1, 2}
-        }
-    )
-    typeD = Tile(
-        index=3,
-        fitsInto=lambda a: True,
-        allowedNeighbors={
-            "up": {1, 3},
-            "down": {1, 3},
             "left": {0},
             "right": {0}
-        }
-    )
-    typeE = Tile(
-        index=4,
-        fitsInto=lambda a: True,
-        allowedNeighbors={
-            "up": {0},
-            "down": {0},
-            "left": {6, 4},
-            "right": {6, 4}
-        }
-    )
-    typeF = Tile(
-        index=5,
-        fitsInto=lambda a: True,
-        allowedNeighbors={
-            "up": {6, 5},
-            "down": {6, 5},
-            "left": {0},
-            "right": {0}
-        }
-    )
-    typeG = Tile(
-        index=6,
-        fitsInto=lambda a: True,
-        allowedNeighbors={
-            "up": {0, 5},
-            "down": {0, 5},
-            "left": {0, 4},
-            "right": {0, 4}
         }
     )
 
     symbols = " o-|-|#"
-    w = 50
-    h = 25
-    grid = makeGrid(w, h, True)
+    w = 32
+    h = 32
+    grid = makeGrid(w, h, False)
     hyp = newSolution(grid, Palette(
-        [typeA, typeB, typeC, typeD, typeE, typeF, typeG]))
+        [typeX, typeY]))
+    # hyp = newSolution(grid, Palette(
+    #     [typeA, typeB, typeC, typeD, typeE, typeF, typeG]))
     # cleaned = cleanSolved(solveRecurs(hyp))
     cleaned = cleanSolved(solvePray(hyp))
 
