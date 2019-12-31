@@ -43,17 +43,17 @@ data Solution = Solution {
 instance Show Solution where
     show sol = "Solution { \n\tBoard: " ++ show (board sol) ++ "\n\tpoptions: " ++ show (poptions sol) ++ ",\n\tunsolved: " ++ show (unsolved sol) ++ "\n}"
 
-newSolution :: Board -> Palette -> Maybe Solution
+newSolution :: Board -> Palette -> Either String Solution
 newSolution brd plt = 
     let ts = tiles plt
         mpoptions = listSatisfies (not . Set.null) [
             Set.fromList [ti | ti <- [0..(length ts - 1)], fitsInto (ts !! ti) $ shape slot]
             | slot <- slots brd]
     in case mpoptions of
-        Nothing -> Nothing
-        Just poptions -> 
+        Left s -> Left s
+        Right poptions -> 
             let unsolved = Set.fromList [pi | pi <- [0..(length poptions - 1)], Set.size (poptions !! pi) > 1]
-            in Just $ Solution {
+            in Right $ Solution {
                 palette  = plt,
                 board    = brd,
                 poptions = poptions,
@@ -86,14 +86,14 @@ generateGrid2 loop w h =
     , x <- [0..(w-1)]]
 
 -- given a list of values, return Nothing if any do not satisfy the function
-listSatisfies :: (a -> Bool) -> [a] -> Maybe [a]
-listSatisfies f [] = Just []
+listSatisfies :: (a -> Bool) -> [a] -> Either String [a]
+listSatisfies f [] = Right []
 listSatisfies f (a:as) = case (f a) of
-    False -> Nothing
+    False -> Left "failed to satisfy condition"
     True -> let mas = listSatisfies f as in
         case mas of
-            Nothing -> Nothing
-            _ -> Just (a:as)
+            Left s -> Left s
+            _ -> Right (a:as)
 
 removeNth :: Int -> [a] -> [a]
 removeNth n ls = Prelude.take n ls ++ Prelude.drop (n+1) ls
@@ -111,6 +111,7 @@ weightedRandom wts = seekDecr wts <$> (RandState $ \gen -> randomR (0, sum wts +
 
 pickRand :: [a] -> RandState a
 pickRand ls = (ls!!) <$> (RandState $ \gen -> randomR (0, (length ls)-1) gen)
+-- pickRand ls = pure $ ls !! 0
 
 seekDecr :: (Fractional n, Ord n) => [n] -> n -> Int
 seekDecr [w] _ = 0
@@ -131,20 +132,21 @@ setpops sol psi new = Solution {
                 else unsolved sol
 }
 
-subtractOptions :: SlotIndex -> Set TileIndex -> Solution -> Maybe Solution
+subtractOptions :: SlotIndex -> Set TileIndex -> Solution -> Either String Solution
 subtractOptions psi remts sol = 
-    let neighbs  = neighbors ((slots . board $ sol) !! psi)
-        psops    = poptions sol !! psi
+    let psops    = (poptions sol) !! psi
         diff     = Set.difference psops remts
         optCount = Set.size diff
     in  if (optCount == 0)
-        then Nothing    -- no possible tiles
+        then Left $ "failed; no options left at " ++ show psi     -- no possible tiles
         else if (optCount == Set.size psops)
-            then Just sol   -- no change
-            else subOptDirHelper (keys neighbs) (neighbs, diff, remts) (setpops sol psi diff)
+            then Right sol   -- no change
+            else 
+                let neighbs  = neighbors ((slots . board $ sol) !! psi)
+                in  subOptDirHelper (keys neighbs) (neighbs, diff, remts) (setpops sol psi diff)
 
-subOptDirHelper :: [Direction] -> (Map Direction SlotIndex, Set TileIndex, Set TileIndex) -> Solution -> Maybe Solution
-subOptDirHelper [] _ sol = Just sol
+subOptDirHelper :: [Direction] -> (Map Direction SlotIndex, Set TileIndex, Set TileIndex) -> Solution -> Either String Solution
+subOptDirHelper [] _ sol = Right sol
 subOptDirHelper (dir:dirs) args@(ninds, opts, ropts) sol = 
     let palTils = tiles . palette $ sol -- list of all tiles in palette
         noptsf = \ti -> (allowedNeighbors (palTils !! ti)) ! dir -- function to get a tile's allowed neighbors in a fixed direction
@@ -156,45 +158,48 @@ subOptDirHelper (dir:dirs) args@(ninds, opts, ropts) sol =
          -- nothing changed toward this direction - continue and check the rest
         then subOptDirHelper dirs args sol
          -- neighbor changed - recurse on it, then continue and check the rest
-        else subOptDirHelper dirs args =<< subtractOptions (ninds ! dir) remdNOpts sol
+        else subOptDirHelper dirs args =<< (subtractOptions (ninds ! dir) remdNOpts sol)
 
-intersectOptions :: SlotIndex -> Set TileIndex -> Solution -> Maybe Solution
+intersectOptions :: SlotIndex -> Set TileIndex -> Solution -> Either String Solution
 intersectOptions index ntis sol = subtractOptions index (Set.difference ((poptions sol) !! index) ntis) sol
 
 a # (i, t) = a >>= intersectOptions i (Set.singleton t)
+a % (i, ts) = a >>= subtractOptions i (Set.fromList ts)
 
 isSolved :: Solution -> Bool
 isSolved sol = Set.null . unsolved $ sol
 
-solveR :: Solution -> RandState (Maybe Solution)
+solveR :: Solution -> RandState (Either String Solution)
 solveR sol = if (isSolved sol)
-    then pure $ Just sol
+    then pure $ Right sol
     else do
         psi <- pickRand $ Set.toList (unsolved sol)      -- random unsolved pslot's index
         let pops = Set.toList ((poptions sol) !! psi)  -- available tiles for selected pslot
             weights = (\ti -> weight ((tiles . palette $ sol) !! ti)) <$> pops -- weights of tiles
-        solveTileHelper sol psi =<< (weightedShuffle weights) 
+        solveTileHelper sol psi =<< ((pops!!)<$>) <$> weightedShuffle weights
 
 -- return solveTileHelper sol, slotIndex, [availableTile's indices]
 --  try tiles until success (should theoretically happen first try)
 --      
 
 
-solveTileHelper :: Solution -> SlotIndex -> [TileIndex] -> RandState (Maybe Solution)
-solveTileHelper _ _ [] = pure Nothing
+solveTileHelper :: Solution -> SlotIndex -> [TileIndex] -> RandState (Either String Solution)
+solveTileHelper sol psi [] = pure (Left $ "ran out of tiles to test at " ++ show psi ++ "                " ++ (showGrid 3 sol))
 solveTileHelper sol psi (t:ts) = 
     let msol' = intersectOptions psi (Set.fromList [t]) sol
     in case msol' of
-        Nothing   -> solveTileHelper sol psi ts
-        Just sol' -> solveR sol'
+        Left s     -> solveTileHelper sol psi ts
+        Right sol' -> solveR sol'
 
-run :: Board -> Palette -> IO (Maybe Solution)
+run :: Board -> Palette -> IO String
 run brd pal = do
     gen <- newStdGen
     let res = do
         sol <- newSolution brd pal
         evalRand (solveR sol) gen
-    pure res
+    case res of
+        Left s -> pure s
+        Right sol -> pure $ showGrid 32 sol
 
 grop :: Int -> [a] -> [[a]]
 grop _ [] = []
@@ -202,24 +207,24 @@ grop n l
   | n > 0 = (List.take n l) : (grop n (List.drop n l))
   | otherwise = error "Negative or zero n"
 
-dispChars = ".+#"
+dispChars = " +-|"
 
 showGrid :: Int -> Solution -> String
-showGrid n g = intercalate "----------------------------------" $ 
-    (intercalate " ") <$> (grop n $ (\a -> 
+showGrid n g = intercalate "                                  " $ 
+    (\d -> "|" ++ intercalate " " d ++ "|") <$> (grop n $ (\a -> 
         case (Set.toList a) of
             [v] -> [dispChars !! v]
             vs  -> show vs
     ) <$> (poptions g))
 
 testTile0 = Tile {
-    weight = 1,
+    weight = 10,
     fitsInto = const True,
     allowedNeighbors = Map.fromList [
-        (-1, Set.fromList [0,1]),
-        (1, Set.fromList [0,1]),
-        (-2, Set.fromList [0,1]),
-        (2, Set.fromList [0,1])]
+        (-1, Set.fromList [0,1,3]),
+        (1, Set.fromList [0,1,3]),
+        (-2, Set.fromList [0,1,2]),
+        (2, Set.fromList [0,1,2])]
 }
 testTile1 = Tile {
     weight = 1,
@@ -227,39 +232,52 @@ testTile1 = Tile {
     allowedNeighbors = Map.fromList [
         (-1, Set.fromList [0,2]),
         (1, Set.fromList [0,2]),
-        (-2, Set.fromList [0,2]),
-        (2, Set.fromList [0,2])]
+        (-2, Set.fromList [0,3]),
+        (2, Set.fromList [0,3])]
 }
 testTile2 = Tile {
-    weight = 1,
+    weight = 5,
     fitsInto = const True,
     allowedNeighbors = Map.fromList [
-        (-1, Set.fromList [1]),
-        (1, Set.fromList [1]),
-        (-2, Set.fromList [1]),
-        (2, Set.fromList [1])]
+        (-1, Set.fromList [1,2]),
+        (1, Set.fromList [1,2]),
+        (-2, Set.fromList [0]),
+        (2, Set.fromList [0])]
 }
-
-testTileA = Tile {
-    weight = 1,
-    fitsInto = const True,
-    allowedNeighbors = Map.fromList [
-        (-1, Set.fromList [1]),
-        (1, Set.fromList [1]),
-        (-2, Set.fromList [1]),
-        (2, Set.fromList [1])]
-}
-testTileB = Tile {
-    weight = 1,
+testTile3 = Tile {
+    weight = 5,
     fitsInto = const True,
     allowedNeighbors = Map.fromList [
         (-1, Set.fromList [0]),
         (1, Set.fromList [0]),
-        (-2, Set.fromList [0]),
-        (2, Set.fromList [0])]
+        (-2, Set.fromList [1,3]),
+        (2, Set.fromList [1,3])]
 }
 
-testPal = Palette [testTile0, testTile1, testTile2]
-testPal2 = Palette [testTileA, testTileB]
-testGrid = generateGrid2 True 15 15
+-- testTileA = Tile {
+--     weight = 1,
+--     fitsInto = const True,
+--     allowedNeighbors = Map.fromList [
+--         (-1, Set.fromList [1,2]),
+--         (1, Set.fromList [1,2]),
+--         (-2, Set.fromList [1,2]),
+--         (2, Set.fromList [1,2])]
+-- }
+-- testTileB = Tile {
+--     weight = 1,
+--     fitsInto = const True,
+--     allowedNeighbors = Map.fromList [
+--         (-1, Set.fromList [0]),
+--         (1, Set.fromList [0]),
+--         (-2, Set.fromList [0]),
+--         (2, Set.fromList [0])]
+-- }
+
+testPal = Palette [testTile0, testTile1, testTile2, testTile3]
+-- testPal2 = Palette [testTileA, testTileB]
+testGrid = generateGrid2 True 32 32
+testGrid2 = generateGrid2 False 5 5
+testGrid3 = generateGrid2 True 3 3
 testSol = newSolution testGrid testPal
+testSol2 = newSolution testGrid2 testPal
+testSol3 = newSolution testGrid3 testPal
