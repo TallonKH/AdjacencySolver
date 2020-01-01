@@ -165,10 +165,12 @@ solveTileHelper sol psi (t:ts) =
         Left s     -> solveTileHelper sol psi ts
         Right sol' -> solveR sol'
 
-run :: Board -> Palette -> IO (Either String Solution)
+run :: Board -> Palette -> IO (String)
 run brd pal = do
     gen <- newStdGen
     let res = do
         sol <- newSolution brd pal
         evalRand (solveR sol) gen
-    pure res
+    case res of
+        Right sol -> pure $ "[" ++ (intercalate ", " [show $ (Set.toList s) !! 0 |  s<-poptions sol]) ++ "]"
+        Left l -> pure l

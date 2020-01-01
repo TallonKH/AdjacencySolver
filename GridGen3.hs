@@ -71,14 +71,15 @@ edgeQualifies Lonely = not
 type SideType = String
 
 data Tile3 = Tile3 {
+    name :: String,
     weightt :: Float,
     edgeQualifiers :: [EdgeQualifier],
     sides :: [Set SideType],
     rots :: [Int],
-    inverts :: [Bool] 
+    inverts :: [Bool]
 }
 instance Show Tile3 where
-    show t = "Tile {\n\t" ++ intercalate "\n\t" [
+    show t = (name t) ++ " {\n\t" ++ intercalate "\n\t" [
         "EdgeQs:\t" ++ (show $ edgeQualifiers t),
         "Sides:\t"  ++ (show $ sides t),
         "Rots:\t"   ++ (show $ rots t),
@@ -117,6 +118,7 @@ invert :: Int -> (Tile3 -> Tile3)
 invert i = 
     let invF = invertLs i
     in \t -> Tile3 {
+        name            = name t,
         weightt         = weightt t,
         edgeQualifiers  = invF $ edgeQualifiers t,
         sides           = invF $ sides t,
@@ -126,29 +128,32 @@ invert i =
 
 rotateX90 :: (Tile3 -> Tile3)
 rotateX90 = \t -> Tile3 {
+    name            = name t,
     weightt         = weightt t,
     edgeQualifiers  = rotateX90ls $ edgeQualifiers t,
     sides           = rotateX90ls $ sides t,
     rots            = modifyLs 0 (+90) $ rots t,
-    inverts         = inverts t
+    inverts         = swapLs 1 2 $ inverts t
 }
 
 rotateY90 :: (Tile3 -> Tile3)
 rotateY90 = \t -> Tile3 {
+    name            = name t,
     weightt         = weightt t,
     edgeQualifiers  = rotateY90ls $ edgeQualifiers t,
     sides           = rotateY90ls $ sides t,
     rots            = modifyLs 1 (+90) $ rots t,
-    inverts         = inverts t
+    inverts         = swapLs 0 2 $ inverts t
 }
 
 rotateZ90 :: (Tile3 -> Tile3)
 rotateZ90 = \t -> Tile3 {
+    name            = name t,
     weightt         = weightt t,
     edgeQualifiers  = rotateZ90ls $ edgeQualifiers t,
     sides           = rotateZ90ls $ sides t,
     rots            = modifyLs 2 (+90) $ rots t,
-    inverts         = inverts t
+    inverts         = swapLs 0 1 $ inverts t
 }
 
 -- [a, f(a), f(f(a)), f(f(f(a))), ...]
@@ -237,3 +242,11 @@ matcher t3s = indexLoop f 0 t3s where
                 | (dir, opp) <- [(0,1), (1,0), (2,3), (3,2), (4,5), (5,4)]
             ]
         }
+
+----------------------------------------------------------------------
+
+showPaletteUsage :: [Tile3] -> String
+showPaletteUsage t3s = intercalate "\n" (showTileUsage <$> t3s)
+
+showTileUsage :: Tile3 -> String
+showTileUsage t3 = (name t3) ++ " " ++ (intercalate " " (show <$> rots t3)) ++ " " ++ (intercalate " " (show <$> inverts t3))
