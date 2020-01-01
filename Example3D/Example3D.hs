@@ -59,9 +59,9 @@ pipeT = Tile3 {
     -- edgeQualifiers  = [Neighboring,Neighboring,Neighboring,Neighboring,Neighboring,Neighboring],
     sides = [
         Set.fromList ["pipe"],
-        Set.fromList ["pipe"],
-        Set.fromList ["pipe"],
         Set.fromList ["air"],
+        Set.fromList ["pipe"],
+        Set.fromList ["pipe"],
         Set.fromList ["air"],
         Set.fromList ["air"]],
     rots = [0,0,0],
@@ -70,10 +70,13 @@ pipeT = Tile3 {
 
 pipeIs = collect [same, just rotateY90, just rotateZ90] pipeI
 pipeElbows = collect [same, \a -> [a] >>= doSpinXns >>= doMirrorX, \a -> [a] >>= doSpinYns >>= doMirrorY] pipeElbow
--- pipeTs = [pipeT] >>= doSpinZ >>= collect [same, just rotateX90, just (rotateX90 . rotateZ90)]
+pipeTs = collect [
+    \s -> [s, rotateX90 s] >>= (\s1 -> [s1, invert 0 s]), 
+    \s -> [rotateZ90 s] >>= (\s1 -> [s1, rotateY90 s1]) >>= (\s2 -> [s2, invert 1 s]),
+    \s -> [rotateY90 s] >>= (\s1 -> [s1, rotateZ90 s1]) >>= (\s2 -> [s2, invert 2 s])] pipeT
 
 -- t3s = air : pipeIs ++ pipeElbows ++ pipeTs
-t3s = air : pipeIs ++ pipeElbows
+t3s = air : pipeIs ++ pipeElbows ++ pipeTs
 
 grid = generateGrid3 False 8 8 8
 

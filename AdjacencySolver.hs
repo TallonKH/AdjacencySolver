@@ -163,8 +163,9 @@ solveTileHelper sol psi (t:ts) =
     let msol' = intersectOptions psi (Set.fromList [t]) sol
     in case msol' of
         Left s     -> solveTileHelper sol psi ts
-        Right sol' -> solveR sol'
-
+        Right sol' -> (\re -> case re of
+            Right sol'' -> pure $ Right sol''
+            Left s -> solveTileHelper sol psi ts) =<< solveR sol'
 run :: Board -> Palette -> IO (String)
 run brd pal = do
     gen <- newStdGen
