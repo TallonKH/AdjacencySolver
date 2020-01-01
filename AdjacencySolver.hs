@@ -1,3 +1,5 @@
+module AdjacencySolver where
+    
 import System.Random
 import Control.Monad.State
 import Data.Set as Set
@@ -17,6 +19,8 @@ data Tile = Tile {
     fitsInto :: Shape -> Bool,
     allowedNeighbors :: Map Direction (Set TileIndex)
 }
+instance Show Tile where
+    show t = "Tile: " ++ show (allowedNeighbors t)
 
 data Palette = Palette {
     tiles :: [Tile]
@@ -59,31 +63,6 @@ newSolution brd plt =
                 poptions = poptions,
                 unsolved = unsolved
             }
-
-gridDirsN :: Int -> [(Direction, [Int])]
-gridDirsN axes = [
-    (sign * axis, (replicate (axis-1) 0) ++ [sign] ++ (replicate (axes-axis) 0))
-    | axis  <- [1..axes]
-    , sign <- [-1, 1]]
-
-generateGrid2 :: Bool -> Int -> Int -> Board
-generateGrid2 loop w h = 
-    let sif = \x y -> x + y * w
-        dirs2 = gridDirsN 2
-    in Board $ [Slot {
-        shape = 1,
-        neighbors = Map.fromList $ [
-            (dir, sif (mod nx w) (mod ny h))
-            | (dir, [ox, oy]) <- dirs2
-            , let nx = x+ox
-            , let ny = y+oy
-            , let valid = 0 <= nx && nx < w && 0 <= ny && ny < h
-            , loop || valid
-            , let nxm = if valid then nx else mod nx w
-            , let nym = if valid then ny else mod ny h]
-    }
-    | y <- [0..(h-1)]
-    , x <- [0..(w-1)]]
 
 -- given a list of values, return Nothing if any do not satisfy the function
 listSatisfies :: (a -> Bool) -> [a] -> Either String [a]
@@ -178,106 +157,18 @@ solveR sol = if (isSolved sol)
             weights = (\ti -> weight ((tiles . palette $ sol) !! ti)) <$> pops -- weights of tiles
         solveTileHelper sol psi =<< ((pops!!)<$>) <$> weightedShuffle weights
 
--- return solveTileHelper sol, slotIndex, [availableTile's indices]
---  try tiles until success (should theoretically happen first try)
---      
-
-
 solveTileHelper :: Solution -> SlotIndex -> [TileIndex] -> RandState (Either String Solution)
-solveTileHelper sol psi [] = pure (Left $ "ran out of tiles to test at " ++ show psi ++ "                " ++ (showGrid 3 sol))
+solveTileHelper sol psi [] = pure (Left $ "ran out of tiles to test at " ++ show psi ++ "\n" ++ (show sol))
 solveTileHelper sol psi (t:ts) = 
     let msol' = intersectOptions psi (Set.fromList [t]) sol
     in case msol' of
         Left s     -> solveTileHelper sol psi ts
         Right sol' -> solveR sol'
 
-run :: Board -> Palette -> IO String
+run :: Board -> Palette -> IO (Either String Solution)
 run brd pal = do
     gen <- newStdGen
     let res = do
         sol <- newSolution brd pal
         evalRand (solveR sol) gen
-    case res of
-        Left s -> pure s
-        Right sol -> pure $ showGrid 32 sol
-
-grop :: Int -> [a] -> [[a]]
-grop _ [] = []
-grop n l
-  | n > 0 = (List.take n l) : (grop n (List.drop n l))
-  | otherwise = error "Negative or zero n"
-
-dispChars = " +-|"
-
-showGrid :: Int -> Solution -> String
-showGrid n g = intercalate "                                  " $ 
-    (\d -> "|" ++ intercalate " " d ++ "|") <$> (grop n $ (\a -> 
-        case (Set.toList a) of
-            [v] -> [dispChars !! v]
-            vs  -> show vs
-    ) <$> (poptions g))
-
-testTile0 = Tile {
-    weight = 10,
-    fitsInto = const True,
-    allowedNeighbors = Map.fromList [
-        (-1, Set.fromList [0,1,3]),
-        (1, Set.fromList [0,1,3]),
-        (-2, Set.fromList [0,1,2]),
-        (2, Set.fromList [0,1,2])]
-}
-testTile1 = Tile {
-    weight = 1,
-    fitsInto = const True,
-    allowedNeighbors = Map.fromList [
-        (-1, Set.fromList [0,2]),
-        (1, Set.fromList [0,2]),
-        (-2, Set.fromList [0,3]),
-        (2, Set.fromList [0,3])]
-}
-testTile2 = Tile {
-    weight = 5,
-    fitsInto = const True,
-    allowedNeighbors = Map.fromList [
-        (-1, Set.fromList [1,2]),
-        (1, Set.fromList [1,2]),
-        (-2, Set.fromList [0]),
-        (2, Set.fromList [0])]
-}
-testTile3 = Tile {
-    weight = 5,
-    fitsInto = const True,
-    allowedNeighbors = Map.fromList [
-        (-1, Set.fromList [0]),
-        (1, Set.fromList [0]),
-        (-2, Set.fromList [1,3]),
-        (2, Set.fromList [1,3])]
-}
-
--- testTileA = Tile {
---     weight = 1,
---     fitsInto = const True,
---     allowedNeighbors = Map.fromList [
---         (-1, Set.fromList [1,2]),
---         (1, Set.fromList [1,2]),
---         (-2, Set.fromList [1,2]),
---         (2, Set.fromList [1,2])]
--- }
--- testTileB = Tile {
---     weight = 1,
---     fitsInto = const True,
---     allowedNeighbors = Map.fromList [
---         (-1, Set.fromList [0]),
---         (1, Set.fromList [0]),
---         (-2, Set.fromList [0]),
---         (2, Set.fromList [0])]
--- }
-
-testPal = Palette [testTile0, testTile1, testTile2, testTile3]
--- testPal2 = Palette [testTileA, testTileB]
-testGrid = generateGrid2 True 32 32
-testGrid2 = generateGrid2 False 5 5
-testGrid3 = generateGrid2 True 3 3
-testSol = newSolution testGrid testPal
-testSol2 = newSolution testGrid2 testPal
-testSol3 = newSolution testGrid3 testPal
+    pure res
