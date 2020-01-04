@@ -36,7 +36,9 @@ generateGrid3 loop w h l =
         sif = \x y z -> (x) + (y * w) + (z * wh)
         dirs3 = gridDirsN 3
     in Board $ [Slot {
-        shape = 0,
+        shape = if loop 
+            then 0 
+            else shapeEdgesMap ! [x>0, x<w-1, y>0, y<h-1, z>0, z<l-1],
         neighbors = Map.fromList $ [
             (dir, sif nx ny nz)
             | (dir, [ox, oy, oz]) <- dirs3
@@ -55,6 +57,49 @@ generateGrid3 loop w h l =
     , y <- [0..(h-1)]
     , x <- [0..(w-1)]]
 
+----------------------------------------------------------------------
+
+allTrue :: [Bool]
+allTrue = replicate 6 True
+
+falsifyI :: [Bool] -> Int -> [Bool]
+falsifyI ls i = setLs i False ls
+
+falsifyIs :: [Bool] -> [Int] -> [Bool]
+falsifyIs ls (i:is) = falsifyIs (falsifyI ls i) is
+falsifyIs ls [] = ls
+
+shapeEdges :: [[Bool]]
+shapeEdges = [
+    [True,True,True,True,True,True],[False,True,True,True,True,True],
+    [True,False,True,True,True,True],[True,True,False,True,True,True],
+    [True,True,True,False,True,True],[True,True,True,True,False,True],
+    [True,True,True,True,True,False],[False,True,False,True,True,True],
+    [False,True,True,False,True,True],[False,True,True,True,False,True],
+    [False,True,True,True,True,False],[True,False,False,True,True,True],
+    [True,False,True,False,True,True],[True,False,True,True,False,True],
+    [True,False,True,True,True,False],[True,True,False,True,False,True],
+    [True,True,False,True,True,False],[True,True,True,False,False,True],
+    [True,True,True,False,True,False],[False,True,False,True,False,True],
+    [False,True,False,True,True,False],[False,True,True,False,False,True],
+    [False,True,True,False,True,False],[True,False,False,True,False,True],
+    [True,False,False,True,True,False],[True,False,True,False,False,True],
+    [True,False,True,False,True,False]]
+
+shapeEdgesMap :: Map [Bool] Int
+shapeEdgesMap = Map.fromList [(shapeEdges !! i, i) | i<-[0..(length shapeEdges)-1]]
+
+-- shapeEdges = nub ([[True, True, True, True, True, True]]
+--     ++ (falsifyI allTrue <$> [0..5])
+--     ++ [falsifyIs allTrue [axis*2+sign, axes]
+--         | axis <- [0..2]
+--         , sign <- [0, 1]
+--         , axes <- [n*2+sign2 | n <- (remLs axis [0..2]), sign2 <- [0,1]]]
+--     ++ [falsifyIs allTrue [0+xs, 2+ys, 4+zs]
+--         | xs <- [0,1]
+--         , ys <- [0,1]
+--         , zs <- [0,1]])
+
 data EdgeQualifier
     = Any
     | Neighboring
@@ -69,6 +114,8 @@ edgeQualifies Any = const True
 edgeQualifies Neighboring = id
 edgeQualifies Lonely = not
 
+----------------------------------------------------------------------
+
 -- sidetypes are orientationless
 type SideType = (String)
 
@@ -76,7 +123,8 @@ data Tile3 = Tile3 {
     name :: String,
     weightt :: Float,
     edgeQualifiers :: [EdgeQualifier],
-    sides :: [Set SideType],
+    otherSides :: [Set SideType],
+    sides :: [SideType],
     rots :: [Int],
     inverts :: [Bool]
 }
@@ -84,8 +132,11 @@ instance Show Tile3 where
     show t = (name t) ++ " {\n\t" ++ intercalate "\n\t" [
         "EdgeQs:\t" ++ (show $ edgeQualifiers t),
         "Sides:\t"  ++ (show $ sides t),
+        "Other Sides:\t"  ++ (show $ otherSides t),
         "Rots:\t"   ++ (show $ rots t),
         "flips:\t"  ++ (show $ inverts t)] ++ "\n}"
+
+----------------------------------------------------------------------
 
 rotateX90ls :: ([a] -> [a])
 rotateX90ls = \[xn,xp,yn,yp,zn,zp] -> [xn,xp,zp,zn,yn,yp]
@@ -124,6 +175,7 @@ invert i =
         weightt         = weightt t,
         edgeQualifiers  = invF $ edgeQualifiers t,
         sides           = invF $ sides t,
+        otherSides           = invF $ otherSides t,
         rots            = rots t,
         inverts         = modifyLs i not $ inverts t
     }
@@ -134,6 +186,7 @@ rotateX90 = \t -> Tile3 {
     weightt         = weightt t,
     edgeQualifiers  = rotateX90ls $ edgeQualifiers t,
     sides           = rotateX90ls $ sides t,
+    otherSides           = rotateX90ls $ otherSides t,
     rots            = modifyLs 0 (+90) $ rots t,
     inverts         = swapLs 1 2 $ inverts t
 }
@@ -144,6 +197,7 @@ rotateY90 = \t -> Tile3 {
     weightt         = weightt t,
     edgeQualifiers  = rotateY90ls $ edgeQualifiers t,
     sides           = rotateY90ls $ sides t,
+    otherSides           = rotateY90ls $ otherSides t,
     rots            = modifyLs 1 (+90) $ rots t,
     inverts         = swapLs 0 2 $ inverts t
 }
@@ -154,6 +208,7 @@ rotateZ90 = \t -> Tile3 {
     weightt         = weightt t,
     edgeQualifiers  = rotateZ90ls $ edgeQualifiers t,
     sides           = rotateZ90ls $ sides t,
+    otherSides           = rotateZ90ls $ otherSides t,
     rots            = modifyLs 2 (+90) $ rots t,
     inverts         = swapLs 0 1 $ inverts t
 }
@@ -191,45 +246,6 @@ doMirrorZ = andSame $ just $ invert 2
 
 ----------------------------------------------------------------------
 
-allTrue :: [Bool]
-allTrue = replicate 6 True
-
-falsifyI :: [Bool] -> Int -> [Bool]
-falsifyI ls i = setLs i False ls
-
-falsifyIs :: [Bool] -> [Int] -> [Bool]
-falsifyIs ls (i:is) = falsifyIs (falsifyI ls i) is
-falsifyIs ls [] = ls
-
-shapeEdges :: [[Bool]]
-shapeEdges = [
-    [True,True,True,True,True,True],[False,True,True,True,True,True],
-    [True,False,True,True,True,True],[True,True,False,True,True,True],
-    [True,True,True,False,True,True],[True,True,True,True,False,True],
-    [True,True,True,True,True,False],[False,True,False,True,True,True],
-    [False,True,True,False,True,True],[False,True,True,True,False,True],
-    [False,True,True,True,True,False],[True,False,False,True,True,True],
-    [True,False,True,False,True,True],[True,False,True,True,False,True],
-    [True,False,True,True,True,False],[True,True,False,True,False,True],
-    [True,True,False,True,True,False],[True,True,True,False,False,True],
-    [True,True,True,False,True,False],[False,True,False,True,False,True],
-    [False,True,False,True,True,False],[False,True,True,False,False,True],
-    [False,True,True,False,True,False],[True,False,False,True,False,True],
-    [True,False,False,True,True,False],[True,False,True,False,False,True],
-    [True,False,True,False,True,False]]
--- shapeEdges = nub ([[True, True, True, True, True, True]]
---     ++ (falsifyI allTrue <$> [0..5])
---     ++ [falsifyIs allTrue [axis*2+sign, axes]
---         | axis <- [0..2]
---         , sign <- [0, 1]
---         , axes <- [n*2+sign2 | n <- (remLs axis [0..2]), sign2 <- [0,1]]]
---     ++ [falsifyIs allTrue [0+xs, 2+ys, 4+zs]
---         | xs <- [0,1]
---         , ys <- [0,1]
---         , zs <- [0,1]])
-
-----------------------------------------------------------------------
-
 matcher :: [Tile3] -> [Tile]
 matcher t3s = indexLoop f 0 t3s where
     f = \i t3 -> 
@@ -240,7 +256,7 @@ matcher t3s = indexLoop f 0 t3s where
             allowedNeighbors = Map.fromList $ [
                 ([-1,1,-2,2,-3,3] !! dir, Set.fromList [otherTi
                     | otherTi <- [0..(length t3s)-1]
-                    , not $ disjoint ((sides t3) !! dir) ((sides $ t3s !! otherTi) !! opp)])
+                    , Set.member ((sides t3) !! dir) ((otherSides $ t3s !! otherTi) !! opp)])
                 | (dir, opp) <- [(0,1), (1,0), (2,3), (3,2), (4,5), (5,4)]
             ]
         }

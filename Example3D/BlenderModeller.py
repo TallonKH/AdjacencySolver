@@ -4,14 +4,14 @@ import json
 from dataclasses import dataclass
 from typing import List
 
-gridPath = "/Users/default/Google Drive/Personal Stuff/Code/AdjacencySolver2/Example3D/grid.txt"
-palettePath = "/Users/default/Google Drive/Personal Stuff/Code/AdjacencySolver2/Example3D/palette.txt"
+gridPath = "/Users/default/Google Drive/Personal Stuff/Code/AdjacencySolver2/Example3D/Castle/grid.txt"
+palettePath = "/Users/default/Google Drive/Personal Stuff/Code/AdjacencySolver2/Example3D/Castle/palette.txt"
 
 # scene = bpy.data.scenes[0]
 parts = bpy.data.collections['Parts'].objects
 destination = bpy.data.collections['Output']
-scale = 2
-
+scale = 1.5
+d = 12
 @dataclass
 class Tile:
     name: str
@@ -36,8 +36,8 @@ def main():
             line = tilesf.readline()
 
         grid = json.loads(gridf.read())
-        grid = [grid[n*8:(n+1)*8] for n in range(64)]
-        grid = [grid[n*8:(n+1)*8] for n in range(8)]
+        grid = [grid[n*d:(n+1)*d] for n in range(d*d)]
+        grid = [grid[n*d:(n+1)*d] for n in range(d)]
 
         z = 0
         for rect in grid:

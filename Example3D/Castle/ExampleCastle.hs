@@ -7,14 +7,15 @@ import GridGen3
 air = Tile3 {
     name = "Null",
     weightt = 50,
-    edgeQualifiers = [Any, Any, Any, Any, Any, Any],
-    sides = [
-        Set.fromList ["air"],
-        Set.fromList ["air"],
-        Set.fromList ["air"],
-        Set.fromList ["air"],
-        Set.fromList ["air"],
-        Set.fromList ["air"]],
+    edgeQualifiers = [Any, Any, Any, Any, Neighboring, Any],
+    sides = ["air", "air", "air", "air", "air", "air"],
+    otherSides = [
+        Set.fromList ["air", "sentryWall"],
+        Set.fromList ["air", "sentryWall"],
+        Set.fromList ["air", "sentryWall"],
+        Set.fromList ["air", "sentryWall"],
+        Set.fromList ["air", "grass_wild", "grass_inner", "sentryWall"],
+        Set.fromList ["air", "sentryWall"]],
     rots = [0,0,0],
     inverts = [False, False, False]
 }
@@ -24,12 +25,16 @@ grassWild = Tile3 {
     weightt = 30,
     edgeQualifiers = [Any, Any, Any, Any, Any, Any],
     sides = [
+        "grass_wild", "grass_wild", 
+        "grass_wild", "grass_wild", 
+        "dirt", "grass_wild"],
+    otherSides = [
         Set.fromList ["grass_wild"],
         Set.fromList ["grass_wild"],
         Set.fromList ["grass_wild"],
         Set.fromList ["grass_wild"],
         Set.fromList ["dirt"],
-        Set.fromList ["air", "grass_wild"]],
+        Set.fromList ["air"]],
     rots = [0,0,0],
     inverts = [False, False, False]
 }
@@ -39,21 +44,29 @@ grassInner = Tile3 {
     weightt = 20,
     edgeQualifiers = [Any, Any, Any, Any, Any, Any],
     sides = [
+        "grass_inner", "grass_inner", 
+        "grass_inner", "grass_inner", 
+        "dirt", "grass_inner"],
+    otherSides = [
         Set.fromList ["grass_inner"],
         Set.fromList ["grass_inner"],
         Set.fromList ["grass_inner"],
         Set.fromList ["grass_inner"],
         Set.fromList ["dirt"],
-        Set.fromList ["air", "grass_inner"]],
+        Set.fromList ["air"]],
     rots = [0,0,0],
     inverts = [False, False, False]
 }
 
-spireBaseL = Tile3 {
-    name = "Spire_Base_L",
+spireBaseW = Tile3 {
+    name = "Spire_Base_W",
     weightt = 0.1,
-    edgeQualifiers = [Any, Any, Any, Any, Any, Any],
+    edgeQualifiers = [Any, Any, Any, Any, Any, Neighboring],
     sides = [
+        "grass_wild", "grass_wild",
+        "grass_wild", "grass_wild",
+        "dirt","spire"],
+    otherSides = [
         Set.fromList ["grass_wild"],
         Set.fromList ["grass_wild"],
         Set.fromList ["grass_wild"],
@@ -64,11 +77,15 @@ spireBaseL = Tile3 {
     inverts = [False, False, False]
 }
 
-spireBaseR = Tile3 {
-    name = "Spire_Base_R",
+spireBaseI = Tile3 {
+    name = "Spire_Base_I",
     weightt = 0.1,
-    edgeQualifiers = [Any, Any, Any, Any, Any, Any],
+    edgeQualifiers = [Any, Any, Any, Any, Any, Neighboring],
     sides = [
+        "grass_inner", "grass_inner",
+        "grass_inner", "grass_inner",
+        "dirt","spire"],
+    otherSides = [
         Set.fromList ["grass_inner"],
         Set.fromList ["grass_inner"],
         Set.fromList ["grass_inner"],
@@ -79,14 +96,19 @@ spireBaseR = Tile3 {
     inverts = [False, False, False]
 }
 
-wallBaseL = Tile3 {
-    name = "Wall_Base_L",
-    weightt = 1,
-    edgeQualifiers = [Any, Any, Any, Any, Any, Any],
+wallBase = Tile3 {
+    name = "Wall_Base",
+    weightt = 2,
+    edgeQualifiers = [Any, Any, Neighboring, Neighboring, Any, Neighboring],
     sides = [
+        "grass_inner", "grass_wild",
+        "wallBaseL", "wallBaseR",
+        "dirt", "wall"
+    ],
+    otherSides = [
         Set.fromList ["grass_inner"],
         Set.fromList ["grass_wild"],
-        Set.fromList ["wallBaseL"],
+        Set.fromList ["wallBaseR"],
         Set.fromList ["wallBaseL"],
         Set.fromList ["dirt"],
         Set.fromList ["wall"]],
@@ -94,29 +116,19 @@ wallBaseL = Tile3 {
     inverts = [False, False, False]
 }
 
-wallBaseR = Tile3 {
-    name = "Wall_Base_R",
-    weightt = 1,
-    edgeQualifiers = [Any, Any, Any, Any, Any, Any],
+sentryBase = Tile3 {
+    name = "Sentry_Base",
+    weightt = 0.05,
+    edgeQualifiers = [Any, Any, Neighboring, Neighboring, Any, Neighboring],
     sides = [
-        Set.fromList ["grass_wild"],
-        Set.fromList ["grass_inner"],
-        Set.fromList ["wallBaseR"],
-        Set.fromList ["wallBaseR"],
-        Set.fromList ["dirt"],
-        Set.fromList ["wall"]],
-    rots = [0,0,0],
-    inverts = [False, False, False]
-}
-
-sentryBaseL = Tile3 {
-    name = "Sentry_Base_L",
-    weightt = 0.2,
-    edgeQualifiers = [Any, Any, Any, Any, Any, Any],
-    sides = [
+        "grass_inner", "grass_wild",
+        "wallBaseL", "wallBaseR",
+        "dirt", "sentry"
+    ],
+    otherSides = [
         Set.fromList ["grass_inner"],
         Set.fromList ["grass_wild"],
-        Set.fromList ["wallBaseL"],
+        Set.fromList ["wallBaseR"],
         Set.fromList ["wallBaseL"],
         Set.fromList ["dirt"],
         Set.fromList ["sentry"]],
@@ -124,27 +136,17 @@ sentryBaseL = Tile3 {
     inverts = [False, False, False]
 }
 
-sentryBaseR = Tile3 {
-    name = "Sentry_Base_R",
-    weightt = 0.2,
-    edgeQualifiers = [Any, Any, Any, Any, Any, Any],
+sentryBendBaseW = Tile3 {
+    name = "Sentry_Bend_Base_W",
+    weightt = 0.02,
+    edgeQualifiers = [Neighboring, Any, Any, Neighboring, Any, Neighboring],
     sides = [
-        Set.fromList ["grass_wild"],
-        Set.fromList ["grass_inner"],
+        "wallBaseL", "grass_wild", 
+        "grass_wild", "wallBaseR",
+        "dirt", "sentryBend"
+    ],
+    otherSides = [
         Set.fromList ["wallBaseR"],
-        Set.fromList ["wallBaseR"],
-        Set.fromList ["dirt"],
-        Set.fromList ["sentry"]],
-    rots = [0,0,0],
-    inverts = [False, False, False]
-}
-
-sentryBendBaseL1 = Tile3 {
-    name = "Sentry_Bend_Base_L1",
-    weightt = 0.05,
-    edgeQualifiers = [Any, Any, Any, Any, Any, Any],
-    sides = [
-        Set.fromList ["wallBaseL"],
         Set.fromList ["grass_wild"],
         Set.fromList ["grass_wild"],
         Set.fromList ["wallBaseL"],
@@ -154,44 +156,20 @@ sentryBendBaseL1 = Tile3 {
     inverts = [False, False, False]
 }
 
-sentryBendBaseR1 = Tile3 {
-    name = "Sentry_Bend_Base_R1",
-    weightt = 0.05,
-    edgeQualifiers = [Any, Any, Any, Any, Any, Any],
+sentryBendBaseI = Tile3 {
+    name = "Sentry_Bend_Base_I",
+    weightt = 0.01,
+    edgeQualifiers = [Neighboring, Any, Any, Neighboring, Any, Neighboring],
     sides = [
-        Set.fromList ["wallBaseR"],
-        Set.fromList ["grass_inner"],
-        Set.fromList ["grass_inner"],
-        Set.fromList ["wallBaseR"],
-        Set.fromList ["dirt"],
-        Set.fromList ["sentryBend"]],
-    rots = [0,0,0],
-    inverts = [False, False, False]
-}
-sentryBendBaseL2 = Tile3 {
-    name = "Sentry_Bend_Base_L2",
-    weightt = 0.05,
-    edgeQualifiers = [Any, Any, Any, Any, Any, Any],
-    sides = [
-        Set.fromList ["grass_wild"],
-        Set.fromList ["wallBaseR"],
-        Set.fromList ["wallBaseR"],
-        Set.fromList ["grass_wild"],
-        Set.fromList ["dirt"],
-        Set.fromList ["sentryBend"]],
-    rots = [0,0,0],
-    inverts = [False, False, False]
-}
-
-sentryBendBaseR2 = Tile3 {
-    name = "Sentry_Bend_Base_R2",
-    weightt = 0.05,
-    edgeQualifiers = [Any, Any, Any, Any, Any, Any],
-    sides = [
-        Set.fromList ["grass_inner"],
-        Set.fromList ["wallBaseL"],
+        "wallBaseR", "grass_inner", 
+        "grass_inner", "wallBaseL",
+        "dirt", "sentryBend"
+    ],
+    otherSides = [
         Set.fromList ["wallBaseL"],
         Set.fromList ["grass_inner"],
+        Set.fromList ["grass_inner"],
+        Set.fromList ["wallBaseR"],
         Set.fromList ["dirt"],
         Set.fromList ["sentryBend"]],
     rots = [0,0,0],
@@ -201,8 +179,12 @@ sentryBendBaseR2 = Tile3 {
 spireTop = Tile3 {
     name = "Spire_Top",
     weightt = 1,
-    edgeQualifiers = [Any, Any, Any, Any, Any, Any],
+    edgeQualifiers = [Any, Any, Any, Any, Neighboring, Any],
     sides = [
+        "sentryWall", "sentryWall",
+        "sentryWall", "sentryWall",
+        "spire", "air"],
+    otherSides = [
         Set.fromList ["air"],
         Set.fromList ["air"],
         Set.fromList ["air"],
@@ -216,8 +198,12 @@ spireTop = Tile3 {
 spireBody = Tile3 {
     name = "Spire_Body",
     weightt = 0.2,
-    edgeQualifiers = [Any, Any, Any, Any, Any, Any],
+    edgeQualifiers = [Any, Any, Any, Any, Neighboring, Neighboring],
     sides = [
+        "sentryWall", "sentryWall",
+        "sentryWall", "sentryWall",
+        "spire", "spire"],
+    otherSides = [
         Set.fromList ["air"],
         Set.fromList ["air"],
         Set.fromList ["air"],
@@ -231,8 +217,12 @@ spireBody = Tile3 {
 wallTop = Tile3 {
     name = "Wall_Top",
     weightt = 0.2,
-    edgeQualifiers = [Any, Any, Any, Any, Any, Any],
-    sides = [
+    edgeQualifiers = [Any, Any, Neighboring, Neighboring, Neighboring, Any],
+     sides = [
+        "sentryWall", "sentryWall",
+        "wallTop", "wallTop",
+        "wall", "air"],
+    otherSides = [
         Set.fromList ["air"],
         Set.fromList ["air"],
         Set.fromList ["wallTop"],
@@ -243,11 +233,34 @@ wallTop = Tile3 {
     inverts = [False, False, False]
 }
 
+wallBody = Tile3 {
+    name = "Wall_Body",
+    weightt = 0.05,
+    edgeQualifiers = [Any, Any, Neighboring, Neighboring, Neighboring, Neighboring],
+    sides = [
+        "sentryWall", "sentryWall",
+        "wallMid", "wallMid",
+        "wall", "wall"],
+    otherSides = [
+        Set.fromList ["air"],
+        Set.fromList ["air"],
+        Set.fromList ["wallMid"],
+        Set.fromList ["wallMid"],
+        Set.fromList ["wall"],
+        Set.fromList ["wall"]],
+    rots = [0,0,0],
+    inverts = [False, False, False]
+}
+
 sentryTop = Tile3 {
     name = "Sentry_Top",
-    weightt = 0.2,
-    edgeQualifiers = [Any, Any, Any, Any, Any, Any],
+    weightt = 0.01,
+    edgeQualifiers = [Any, Any, Neighboring, Neighboring, Neighboring, Any],
     sides = [
+        "sentryWall", "sentryWall",
+        "wallTop", "wallTop",
+        "sentry", "air"],
+    otherSides = [
         Set.fromList ["air"],
         Set.fromList ["air"],
         Set.fromList ["wallTop"],
@@ -258,11 +271,53 @@ sentryTop = Tile3 {
     inverts = [False, False, False]
 }
 
+sentryTall = Tile3 {
+    name = "Sentry_Tall",
+    weightt = 0.01,
+    edgeQualifiers = [Any, Any, Neighboring, Neighboring, Neighboring, Neighboring],
+    sides = [
+        "sentryWall", "sentryWall",
+        "wallTop", "wallTop",
+        "sentry", "spire"],
+    otherSides = [
+        Set.fromList ["air"],
+        Set.fromList ["air"],
+        Set.fromList ["wallTop"],
+        Set.fromList ["wallTop"],
+        Set.fromList ["sentry"],
+        Set.fromList ["spire"]],
+    rots = [0,0,0],
+    inverts = [False, False, False]
+}
+
+sentryBody = Tile3 {
+    name = "Sentry_Body",
+    weightt = 0.05,
+    edgeQualifiers = [Any, Any, Neighboring, Neighboring, Neighboring, Neighboring],
+    sides = [
+        "sentryWall", "sentryWall",
+        "wallMid", "wallMid",
+        "sentry", "sentry"],
+    otherSides = [
+        Set.fromList ["air"],
+        Set.fromList ["air"],
+        Set.fromList ["wallMid"],
+        Set.fromList ["wallMid"],
+        Set.fromList ["sentry"],
+        Set.fromList ["sentry"]],
+    rots = [0,0,0],
+    inverts = [False, False, False]
+}
+
 sentryBendTop = Tile3 {
     name = "Sentry_Bend_Top",
-    weightt = 0.01,
-    edgeQualifiers = [Any, Any, Any, Any, Any, Any],
+    weightt = 0.005,
+    edgeQualifiers = [Neighboring, Any, Any, Neighboring, Neighboring, Any],
     sides = [
+        "wallTop", "sentryWall",
+        "sentryWall", "wallTop",
+        "sentryBend", "air"],
+    otherSides = [
         Set.fromList ["wallTop"],
         Set.fromList ["air"],
         Set.fromList ["air"],
@@ -273,14 +328,30 @@ sentryBendTop = Tile3 {
     inverts = [False, False, False]
 }
 
-t3s = [air, grassWild, grassInner, spireBaseL, spireBaseR, spireTop, spireBody]
-    ++ ([
-        wallBaseL, wallBaseR, sentryBaseL, sentryBaseR, 
-        sentryBendBaseR1,sentryBendBaseR2, sentryBendBaseL1, sentryBendBaseL2, 
-        wallTop, sentryTop] >>= andSame (just rotateZ90))
-    ++ ([sentryBendTop] >>= doSpinZ)
+sentryBendBody = Tile3 {
+    name = "Sentry_Bend_Body",
+    weightt = 0.002,
+    edgeQualifiers = [Neighboring, Any, Any, Neighboring, Neighboring, Neighboring],
+    sides = [
+        "wallMid", "sentryWall",
+        "sentryWall", "wallMid",
+        "sentryBend", "sentryBend"],
+    otherSides = [
+        Set.fromList ["wallMid"],
+        Set.fromList ["air"],
+        Set.fromList ["air"],
+        Set.fromList ["wallMid"],
+        Set.fromList ["sentryBend"],
+        Set.fromList ["sentryBend"]],
+    rots = [0,0,0],
+    inverts = [False, False, False]
+}
 
-grid = generateGrid3 False 8 8 4
+t3s = [air, grassWild, grassInner, spireBaseW, spireBaseI, spireTop, spireBody]
+    ++ ([wallTop, wallBody, sentryTop, sentryBody, sentryTall] >>= andSame (just rotateZ90))
+    ++ ([sentryBendBaseW, sentryBendBaseI, sentryBendTop, sentryBendBody, wallBase, sentryBase] >>= doSpinZ)
+
+grid = generateGrid3 False 16 16 3
 
 pal = Palette $ matcher t3s
 
