@@ -36,18 +36,20 @@ generateGrid3 loop w h l =
         sif = \x y z -> (x) + (y * w) + (z * wh)
         dirs3 = gridDirsN 3
     in Board $ [Slot {
-        shape = 1,
+        shape = 0,
         neighbors = Map.fromList $ [
             (dir, sif nx ny nz)
             | (dir, [ox, oy, oz]) <- dirs3
             , let nx = x+ox
+            , let xValid = 0 <= nx && nx < w
             , let ny = y+oy
+            , let yValid = 0 <= ny && ny < h
             , let nz = z+oz
-            , let valid = 0 <= nx && nx < w && 0 <= ny && ny < h && 0 <= nz && nz < l
-            , loop || valid
-            , let nxm = if valid then nx else mod nx w
-            , let nym = if valid then ny else mod ny h
-            , let nzm = if valid then nz else mod nz l]
+            , let zValid = 0 <= nz && nz < l
+            , loop || (xValid && yValid && zValid)
+            , let nxm = if xValid then nx else mod nx w
+            , let nym = if yValid then ny else mod ny h
+            , let nzm = if zValid then nz else mod nz l]
     }
     | z <- [0..(l-1)]
     , y <- [0..(h-1)]
@@ -68,7 +70,7 @@ edgeQualifies Neighboring = id
 edgeQualifies Lonely = not
 
 -- sidetypes are orientationless
-type SideType = String
+type SideType = (String)
 
 data Tile3 = Tile3 {
     name :: String,
@@ -245,8 +247,8 @@ matcher t3s = indexLoop f 0 t3s where
 
 ----------------------------------------------------------------------
 
-showPaletteUsage :: [Tile3] -> String
-showPaletteUsage t3s = intercalate "\n" (showTileUsage <$> t3s)
+showPaletteUsage :: [Tile3] -> IO ()
+showPaletteUsage t3s = putStr $ (intercalate "\n" (showTileUsage <$> t3s)) ++ "\n"
 
 showTileUsage :: Tile3 -> String
 showTileUsage t3 = (name t3) ++ " " ++ (intercalate " " (show <$> rots t3)) ++ " " ++ (intercalate " " (show <$> inverts t3))

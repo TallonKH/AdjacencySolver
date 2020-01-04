@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from typing import List
 
 gridPath = "/Users/default/Google Drive/Personal Stuff/Code/AdjacencySolver2/Example3D/grid.txt"
-palettePath = "/Users/default/Google Drive/Personal Stuff/Code/AdjacencySolver2/Example3D/pipes.txt"
+palettePath = "/Users/default/Google Drive/Personal Stuff/Code/AdjacencySolver2/Example3D/palette.txt"
 
 # scene = bpy.data.scenes[0]
 parts = bpy.data.collections['Parts'].objects

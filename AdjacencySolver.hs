@@ -68,7 +68,7 @@ newSolution brd plt =
 listSatisfies :: (a -> Bool) -> [a] -> Either String [a]
 listSatisfies f [] = Right []
 listSatisfies f (a:as) = case (f a) of
-    False -> Left "failed to satisfy condition"
+    False -> Left "failed to satisfy initial condition"
     True -> let mas = listSatisfies f as in
         case mas of
             Left s -> Left s
@@ -142,8 +142,8 @@ subOptDirHelper (dir:dirs) args@(ninds, opts, ropts) sol =
 intersectOptions :: SlotIndex -> Set TileIndex -> Solution -> Either String Solution
 intersectOptions index ntis sol = subtractOptions index (Set.difference ((poptions sol) !! index) ntis) sol
 
-a # (i, t) = a >>= intersectOptions i (Set.singleton t)
-a % (i, ts) = a >>= subtractOptions i (Set.fromList ts)
+-- a # (i, t) = a >>= intersectOptions i (Set.singleton t)
+-- a % (i, ts) = a >>= subtractOptions i (Set.fromList ts)
 
 isSolved :: Solution -> Bool
 isSolved sol = Set.null . unsolved $ sol
@@ -166,12 +166,20 @@ solveTileHelper sol psi (t:ts) =
         Right sol' -> (\re -> case re of
             Right sol'' -> pure $ Right sol''
             Left s -> solveTileHelper sol psi ts) =<< solveR sol'
-run :: Board -> Palette -> IO (String)
-run brd pal = do
-    gen <- newStdGen
-    let res = do
-        sol <- newSolution brd pal
-        evalRand (solveR sol) gen
-    case res of
-        Right sol -> pure $ "[" ++ (intercalate ", " [show $ (Set.toList s) !! 0 |  s<-poptions sol]) ++ "]"
+
+runNew :: Board -> Palette -> IO (String)
+runNew brd pal = do
+    case (newSolution brd pal) of
         Left l -> pure l
+        Right sol -> runOn $ Right sol
+
+
+runOn :: Either String Solution -> IO (String)
+runOn msol = do
+    gen <- newStdGen
+    case msol of
+        Left l -> pure l
+        Right sol -> pure $ do
+            case (evalRand (solveR sol) gen) of
+                Left l -> l
+                Right sol' -> ("[" ++ (intercalate ", " [show $ (Set.toList s) !! 0 |  s<-poptions sol']) ++ "]")
