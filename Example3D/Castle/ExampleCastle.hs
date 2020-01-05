@@ -10,12 +10,12 @@ air = Tile3 {
     edgeQualifiers = [Any, Any, Any, Any, Neighboring, Any],
     sides = ["air", "air", "air", "air", "air", "air"],
     otherSides = [
-        Set.fromList ["air", "sentryWall"],
-        Set.fromList ["air", "sentryWall"],
-        Set.fromList ["air", "sentryWall"],
-        Set.fromList ["air", "sentryWall"],
-        Set.fromList ["air", "grass_wild", "grass_inner", "sentryWall"],
-        Set.fromList ["air", "sentryWall"]],
+        Set.fromList ["air", "wallSide"],
+        Set.fromList ["air", "wallSide"],
+        Set.fromList ["air", "wallSide"],
+        Set.fromList ["air", "wallSide"],
+        Set.fromList ["air", "grass_wild", "grass_inner", "wallSide", "path"],
+        Set.fromList ["air", "wallSide"]],
     rots = [0,0,0],
     inverts = [False, False, False]
 }
@@ -116,6 +116,26 @@ wallBase = Tile3 {
     inverts = [False, False, False]
 }
 
+gateBase = Tile3 {
+    name = "Gate_Base",
+    weightt = 0.05,
+    edgeQualifiers = [Any, Any, Neighboring, Neighboring, Any, Neighboring],
+    sides = [
+        "grass_inner", "path",
+        "wallBaseL", "wallBaseR",
+        "dirt", "gate"
+    ],
+    otherSides = [
+        Set.fromList ["grass_inner"],
+        Set.fromList ["path"],
+        Set.fromList ["wallBaseR"],
+        Set.fromList ["wallBaseL"],
+        Set.fromList ["dirt"],
+        Set.fromList ["gate"]],
+    rots = [0,0,0],
+    inverts = [False, False, False]
+}
+
 sentryBase = Tile3 {
     name = "Sentry_Base",
     weightt = 0.05,
@@ -181,8 +201,8 @@ spireTop = Tile3 {
     weightt = 1,
     edgeQualifiers = [Any, Any, Any, Any, Neighboring, Any],
     sides = [
-        "sentryWall", "sentryWall",
-        "sentryWall", "sentryWall",
+        "wallSide", "wallSide",
+        "wallSide", "wallSide",
         "spire", "air"],
     otherSides = [
         Set.fromList ["air"],
@@ -200,8 +220,8 @@ spireBody = Tile3 {
     weightt = 0.2,
     edgeQualifiers = [Any, Any, Any, Any, Neighboring, Neighboring],
     sides = [
-        "sentryWall", "sentryWall",
-        "sentryWall", "sentryWall",
+        "wallSide", "wallSide",
+        "wallSide", "wallSide",
         "spire", "spire"],
     otherSides = [
         Set.fromList ["air"],
@@ -219,7 +239,7 @@ wallTop = Tile3 {
     weightt = 0.2,
     edgeQualifiers = [Any, Any, Neighboring, Neighboring, Neighboring, Any],
      sides = [
-        "sentryWall", "sentryWall",
+        "wallSide", "wallSide",
         "wallTop", "wallTop",
         "wall", "air"],
     otherSides = [
@@ -233,12 +253,31 @@ wallTop = Tile3 {
     inverts = [False, False, False]
 }
 
+gateTop = Tile3 {
+    name = "Gate_Top",
+    weightt = 0.2,
+    edgeQualifiers = [Any, Any, Neighboring, Neighboring, Neighboring, Any],
+     sides = [
+        "wallSide", "wallSide",
+        "wallTop", "wallTop",
+        "gate", "air"],
+    otherSides = [
+        Set.fromList ["air"],
+        Set.fromList ["air"],
+        Set.fromList ["wallTop"],
+        Set.fromList ["wallTop"],
+        Set.fromList ["gate"],
+        Set.fromList ["air"]],
+    rots = [0,0,0],
+    inverts = [False, False, False]
+}
+
 wallBody = Tile3 {
     name = "Wall_Body",
     weightt = 0.05,
     edgeQualifiers = [Any, Any, Neighboring, Neighboring, Neighboring, Neighboring],
     sides = [
-        "sentryWall", "sentryWall",
+        "wallSide", "wallSide",
         "wallMid", "wallMid",
         "wall", "wall"],
     otherSides = [
@@ -257,7 +296,7 @@ sentryTop = Tile3 {
     weightt = 0.01,
     edgeQualifiers = [Any, Any, Neighboring, Neighboring, Neighboring, Any],
     sides = [
-        "sentryWall", "sentryWall",
+        "wallSide", "wallSide",
         "wallTop", "wallTop",
         "sentry", "air"],
     otherSides = [
@@ -276,7 +315,7 @@ sentryTall = Tile3 {
     weightt = 0.01,
     edgeQualifiers = [Any, Any, Neighboring, Neighboring, Neighboring, Neighboring],
     sides = [
-        "sentryWall", "sentryWall",
+        "wallSide", "wallSide",
         "wallTop", "wallTop",
         "sentry", "spire"],
     otherSides = [
@@ -295,7 +334,7 @@ sentryBody = Tile3 {
     weightt = 0.05,
     edgeQualifiers = [Any, Any, Neighboring, Neighboring, Neighboring, Neighboring],
     sides = [
-        "sentryWall", "sentryWall",
+        "wallSide", "wallSide",
         "wallMid", "wallMid",
         "sentry", "sentry"],
     otherSides = [
@@ -314,8 +353,8 @@ sentryBendTop = Tile3 {
     weightt = 0.005,
     edgeQualifiers = [Neighboring, Any, Any, Neighboring, Neighboring, Any],
     sides = [
-        "wallTop", "sentryWall",
-        "sentryWall", "wallTop",
+        "wallTop", "wallSide",
+        "wallSide", "wallTop",
         "sentryBend", "air"],
     otherSides = [
         Set.fromList ["wallTop"],
@@ -328,13 +367,32 @@ sentryBendTop = Tile3 {
     inverts = [False, False, False]
 }
 
+sentryBendTall = Tile3 {
+    name = "Sentry_Bend_Tall",
+    weightt = 0.003,
+    edgeQualifiers = [Neighboring, Any, Any, Neighboring, Neighboring, Neighboring],
+    sides = [
+        "wallTop", "wallSide",
+        "wallSide", "wallTop",
+        "sentryBend", "spire"],
+    otherSides = [
+        Set.fromList ["wallTop"],
+        Set.fromList ["air"],
+        Set.fromList ["air"],
+        Set.fromList ["wallTop"],
+        Set.fromList ["sentryBend"],
+        Set.fromList ["spire"]],
+    rots = [0,0,0],
+    inverts = [False, False, False]
+}
+
 sentryBendBody = Tile3 {
     name = "Sentry_Bend_Body",
     weightt = 0.002,
     edgeQualifiers = [Neighboring, Any, Any, Neighboring, Neighboring, Neighboring],
     sides = [
-        "wallMid", "sentryWall",
-        "sentryWall", "wallMid",
+        "wallMid", "wallSide",
+        "wallSide", "wallMid",
         "sentryBend", "sentryBend"],
     otherSides = [
         Set.fromList ["wallMid"],
@@ -347,11 +405,69 @@ sentryBendBody = Tile3 {
     inverts = [False, False, False]
 }
 
-t3s = [air, grassWild, grassInner, spireBaseW, spireBaseI, spireTop, spireBody]
-    ++ ([wallTop, wallBody, sentryTop, sentryBody, sentryTall] >>= andSame (just rotateZ90))
-    ++ ([sentryBendBaseW, sentryBendBaseI, sentryBendTop, sentryBendBody, wallBase, sentryBase] >>= doSpinZ)
+path = Tile3 {
+    name = "Path",
+    weightt = 1,
+    edgeQualifiers = [Any, Any, Any, Any, Any, Any],
+    sides = [
+        "grass_wild", "grass_wild",
+        "path", "path",
+        "dirt", "path"],
+    otherSides = [
+        Set.fromList ["grass_wild"],
+        Set.fromList ["grass_wild"],
+        Set.fromList ["path"],
+        Set.fromList ["path"],
+        Set.fromList ["dirt"],
+        Set.fromList ["air"]],
+    rots = [0,0,0],
+    inverts = [False, False, False]
+}
 
-grid = generateGrid3 False 16 16 3
+pathBend = Tile3 {
+    name = "Path_Bend",
+    weightt = 0.3,
+    edgeQualifiers = [Any, Any, Any, Any, Any, Any],
+    sides = [
+        "path", "grass_wild",
+        "grass_wild", "path",
+        "dirt", "path"],
+    otherSides = [
+        Set.fromList ["path"],
+        Set.fromList ["grass_wild"],
+        Set.fromList ["grass_wild"],
+        Set.fromList ["path"],
+        Set.fromList ["dirt"],
+        Set.fromList ["air"]],
+    rots = [0,0,0],
+    inverts = [False, False, False]
+}
+
+pathT = Tile3 {
+    name = "Path_T",
+    weightt = 0.01,
+    edgeQualifiers = [Any, Any, Any, Any, Any, Any],
+    sides = [
+        "path", "grass_wild",
+        "path", "path",
+        "dirt", "path"],
+    otherSides = [
+        Set.fromList ["path"],
+        Set.fromList ["grass_wild"],
+        Set.fromList ["path"],
+        Set.fromList ["path"],
+        Set.fromList ["dirt"],
+        Set.fromList ["air"]],
+    rots = [0,0,0],
+    inverts = [False, False, False]
+}
+
+t3s = [air, grassWild, grassInner, spireBaseW, spireBaseI, spireTop, spireBody]
+    ++ ([wallTop, wallBody, sentryTop, sentryBody, sentryTall, gateTop] >>= andSame (just rotateZ90))
+    ++ ([sentryBendBaseW, sentryBendBaseI, sentryBendTop, sentryBendTall, sentryBendBody, 
+    wallBase, sentryBase, gateBase, path, pathBend, pathT] >>= doSpinZ)
+
+grid = generateGrid3 False 16 16 4
 
 pal = Palette $ matcher t3s
 
